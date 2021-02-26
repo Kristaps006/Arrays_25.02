@@ -61,10 +61,12 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = ''; // we need to empty string before -thats how we do it
 
-  movements.forEach(function (mov, i) {
+  const moves = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  moves.forEach(function (mov, i) {
     const type = mov > 0 ? `deposit` : `withdrawal`;
 
     const html = `
@@ -72,19 +74,167 @@ const displayMovements = function (movements) {
       <div class="movements__type movements__type--${type}">${
       i + 1
     } ${type}</div>
-      <div class="movements__value">${mov}</div>
+      <div class="movements__value">${mov}€</div>
   </div>`;
 
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
-displayMovements(account1.movements);
 
-const calcDisplayBalance = move => {
-  const balance = move.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} EURO`;
+const calcDisplayBalance = acc => {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance}€`;
 };
-calcDisplayBalance(account1.movements);
+
+const calcDisplaySummary = acc => {
+  const income = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${income}€`;
+
+  const out = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((mov, arr) => mov + arr, 0);
+  labelSumOut.textContent = `${Math.abs(out)}€`; // MAth.abs removes the minuss sign
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter(interest => interest >= 1)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumInterest.textContent = `${interest}€ `;
+};
+
+const createUserNames = accounts => {
+  accounts.forEach(account => {
+    account.username = account.owner
+      .toLowerCase()
+      .split(' ')
+      .map(names => names[0])
+      .join('');
+  });
+};
+
+createUserNames(accounts);
+
+const updateUi = function (acc) {
+  ///Display movements__type
+  displayMovements(acc.movements);
+
+  //Display Summary
+  calcDisplaySummary(acc);
+
+  //Display BalanceValue
+
+  calcDisplayBalance(acc);
+
+  //clear input fields
+};
+
+//// EVENT HANDLERS //////////////////////////////////
+
+let currentAccount;
+
+btnLogin.addEventListener('click', e => {
+  //prevents form from submitting
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    labelWelcome.textContent = `Welcome back , ${
+      //Display UI and Welcome Message
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 100;
+    inputLoginUsername.value = inputLoginPin.value = '';
+
+    inputLoginPin.blur(); // Makes field to loose the focus
+
+    /* //Display movements__type
+    displayMovements(currentAccount.movements);
+
+    //Display Summary
+    calcDisplaySummary(currentAccount);
+
+    //Display BalanceValue
+
+    calcDisplayBalance(currentAccount);
+
+    //clear input fields */
+    //Uptade Ui
+    updateUi(currentAccount);
+  }
+});
+
+btnTransfer.addEventListener('click', e => {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    updateUi(currentAccount);
+  }
+  // need to find the user
+});
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const amount = Number(inputLoanAmount.value);
+
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    //Add amount
+    currentAccount.movements.push(amount);
+
+    // Update UI
+
+    updateUi(currentAccount);
+  }
+
+  inputLoanAmount.value = '';
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      // Find index finds the indexes of arrays
+      acc => acc.username === currentAccount.username
+    );
+
+    accounts.splice(index, 1);
+
+    //Hide UI
+    containerApp.style.opacity = 1;
+  }
+
+  inputCloseUsername.value = inputClosePin.value = '';
+});
+
+let sorted = false;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  console.log('dog');
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
+});
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 // LECTURES
@@ -253,7 +403,7 @@ console.log( description);
   });
 };
 console.log(accounts);
-/* const username = user
+ const username = user
   .toLowerCase()
   .split(' ')
   .map(names => names[0])
@@ -306,18 +456,137 @@ console.log(maximum);
 console.log(movements);
  */
 //______________CODING CHALLLANGE #2___________
-
+/* 
 const dogsAge = [5, 2, 4, 1, 15, 8, 3];
 const dogsAge2 = [16, 6, 10, 5, 6, 1, 4];
 
-const calcAverageAge = ages => {
-  const human = ages
+const calcAverageAge = ages =>
+  ages
     .map(age => (age <= 2 ? 2 * age : 16 + age * 4))
-    .filter(years => years >= 18);
+    .filter(years => years >= 18)
+    .reduce((acc, i, x, arr) => acc + i / arr.length, 0);
 
-  const finalAge = human.reduce((acc, i, x, arr) => acc + i / arr.length, 0);
+const dogsRealAge = calcAverageAge(dogsAge2);
+console.log(dogsRealAge);
+ */
+//__________ CHAINING METHODS______
 
-  console.log(Math.round(finalAge));
-};
+/* const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+const euroToUsd = 1.1;
 
-calcAverageAge(dogsAge2);
+//  U can addd in chain as long as it returns new array
+//Pipeline
+const deposits = movements
+  .filter(movement => movement > 0)
+  .filter(movement => movement > 0)
+  .map(movement => movement * euroToUsd)
+  .reduce((acc, movement) => acc + movement, 0);
+
+console.log(deposits);
+ */
+
+//_______________________THE FIND METHOD ________________________
+
+/* const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+
+//It will find the first element in the array that satisfies the condition
+// Filter methd returns new array and find returns only one element
+
+const firstWithDrawal = movements.find(mov => mov < 0);
+
+console.log(movements);
+console.log(firstWithDrawal); // logs - 400;
+
+console.log(accounts);
+
+const account = accounts.find(acc => acc.owner === 'Jessica Davis');
+console.log(account);
+ */
+
+//___________SOME &  EVERY------------------------------------------
+/* 
+const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+
+//EQUALITY
+console.log(movements.includes(-130)); //logs - true   , it checks only for equality
+console.log(movements);
+
+//CONDITION
+
+const anyDepo = movements.some(mov => mov > 0); // logs true -- returns condition of movements
+console.log(anyDepo);
+
+//____EVERY   -- runs through all elements and returns only if all elements are true
+console.log(movements.every(mov => mov > 0));
+console.log(account4.movements.every(mov => mov > 0));
+
+//Separate callbacks
+
+const deposits = mov => mov > 0;
+
+movements.forEach(deposits);
+console.log(movements.some(deposits));
+
+//___________Flat &  FLATMAP------------------------------------------
+
+const arr = [[1, 2, 3], [4, 5, 6], 7, 8];
+
+console.log(arr.flat()); //  Returns nested arrays in one array logs - [ 1, 2, 3, 4, 5, 6, 7, 8 ]  It goes only one level deep
+
+const arrDeep = [[1, [2, 3]], [4, [5, 6]], 7, 8];
+console.log(arrDeep.flat(4)); // BY specifing number like 4 it will go 4 levels deep in
+
+const accountMovement = accounts.map(acc => acc.movements);
+console.log(accountMovement);
+
+const allMovements = accountMovement.flat().reduce((acc, mov) => acc + mov, 0);
+console.log(allMovements);
+ */
+//FLATMAP  combines Flat and MAP and goes only one level deep
+
+//___________________________________- SORTING ARRAYS-_______________________________________________________
+/* 
+const owners = ['Jonas', 'Zach', 'Adam', 'Martha'];
+
+//Sort Mutates original arrray. It does sorting based on strings
+
+console.log(owners.sort()); // returns [ "Adam", "Jonas", "Martha", "Zach" ]
+
+// Numbers
+
+console.log(movements);
+
+// If we return postive > 0 , B ,A
+// return < 0, A ,B
+// movements.sort((a, b) => (a < b ? 1 : -1));
+
+movements.sort((a, b) => a - b); // this is the same as above
+console.log(movements);
+ */
+
+//___________________________________- MORE WAYS CREATING ARRAYS
+/* 
+const arr = [1, 2, 3, 4, 5, 6, 7, 8];
+console.log([1, 2, 3, 4, 5, 6, 7, 8]);
+console.log(new Array(1, 3, 4, 5, 6, 7)); // logs Array(6) [ 1, 3, 4, 5, 6, 7 ]
+
+const x = new Array(7);
+console.log(x); // returns Array(7) [ <7 empty slots> ]
+//x.fill(1);
+//console.log(x); // logs Array(7) [ 1, 1, 1, 1, 1, 1, 1 ]
+
+x.fill(1, 3, 5);
+console.log(x); // logs [ <3 empty slots>, 1, 1, <2 empty slots> ]
+
+x.fill(69, 1, 6);
+console.log(x); // logs  [ <1 empty slot>, 69, 69, 69, 69, 69, <1 empty slot> ]
+
+//ARRAY FROM
+
+const y = Array.from({ length: 7 }, () => 1);
+console.log(y); // logs Array(7) [ 1, 1, 1, 1, 1, 1, 1 ]
+
+const z = Array.from({ length: 7 }, (_, i) => i + 1);
+console.log(z); // logs Array(7) [ 1, 2, 3, 4, 5, 6, 7 ] */
+
+//___________________________________- WHICH ARRAY METHOD TO USE WITH
