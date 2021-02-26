@@ -590,3 +590,48 @@ const z = Array.from({ length: 7 }, (_, i) => i + 1);
 console.log(z); // logs Array(7) [ 1, 2, 3, 4, 5, 6, 7 ] */
 
 //___________________________________- WHICH ARRAY METHOD TO USE WITH
+
+const bankDepositSum = accounts
+  .flatMap(account => account.movements)
+  .filter(mov => mov > 0)
+  .reduce((acc, cur) => acc + cur, 0);
+
+console.log(bankDepositSum);
+
+//2
+
+const numDeposits1000 = accounts
+  .flatMap(account => account.movements)
+  //.filter(mov => mov >= 1000).length;
+  .reduce((count, cur) => (cur > 1000 ? count + 1 : count), 0);
+console.log(numDeposits1000);
+
+//3
+
+const { deposits, withdrawals } = accounts
+  .flatMap(account => account.movements)
+  .reduce(
+    (sums, cur) => {
+      // cur > 0 ? (sums.deposits += cur) : (sums.withdrawals += cur);
+      sums[cur > 0 ? 'deposits' : 'withdrawals'] += cur;
+      return sums;
+    },
+    { deposits: 0, withdrawals: 0 }
+  );
+console.log(deposits, withdrawals); // logs script.js:620 {deposits: 25180, withdrawals: -7340}
+
+// Convert --  this is a nice title   - to  - This Is a Nice Title -
+
+const convertTitle = title => {
+  const exceptions = ['a', 'the', 'or', 'but', 'on', 'in', 'with'];
+  const titleCase = title
+    .toLowerCase()
+    .split(' ')
+    .map(word =>
+      exceptions.includes(word) ? word : word[0].toUpperCase() + word.slice(1)
+    )
+    .join(' ');
+  return titleCase;
+};
+
+console.log(convertTitle('this is a nice title'));
