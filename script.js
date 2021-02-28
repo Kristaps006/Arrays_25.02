@@ -503,7 +503,7 @@ const account = accounts.find(acc => acc.owner === 'Jessica Davis');
 console.log(account);
  */
 
-//___________SOME &  EVERY------------------------------------------
+//___________SOME &  EVERY  INCLUDES------------------------------------------
 /* 
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
@@ -589,7 +589,7 @@ console.log(y); // logs Array(7) [ 1, 1, 1, 1, 1, 1, 1 ]
 const z = Array.from({ length: 7 }, (_, i) => i + 1);
 console.log(z); // logs Array(7) [ 1, 2, 3, 4, 5, 6, 7 ] */
 
-//___________________________________- WHICH ARRAY METHOD TO USE WITH
+/* //___________________________________- WHICH ARRAY METHOD TO USE WITH
 
 const bankDepositSum = accounts
   .flatMap(account => account.movements)
@@ -635,3 +635,51 @@ const convertTitle = title => {
 };
 
 console.log(convertTitle('this is a nice title'));
+ */
+
+//FINNAL ARRAY CHALLENGE
+
+/* FindSarah'sdogandlogtotheconsolewhetherit'seatingtoomuchortoo
+ little. Hint: Some dogs have multiple owners, 
+ so you first need to find Sarah in the owners array, 
+ and so this one is a bit 
+tricky (on purpose) 🤓
+ */
+
+const dogs = [
+  { weight: 22, curFood: 250, owners: ['Alice', 'Bob'] },
+  { weight: 8, curFood: 200, owners: ['Matilda'] },
+  { weight: 13, curFood: 275, owners: ['Sarah', 'John'] },
+  { weight: 32, curFood: 340, owners: ['Michael'] },
+];
+
+dogs.forEach(dog => (dog.recFood = Math.trunc(dog.weight ** 0.75 * 28)));
+console.log(dogs);
+
+const sarDog = dogs.find(dog => dog.owners.includes('Sarah'));
+console.log(sarDog);
+
+// ? console.log('true') : console.log('not'));
+/* dog.owners.includes('Sarah') && dog.recFood < dog.curFood
+    ? console.log('too much')
+    : console.log('too little') */
+console.log(
+  `Sarahs dog is eating too  ${
+    sarDog.recFood < sarDog.curFood ? 'much' : 'little'
+  }`
+);
+
+/* Create an array containing all owners of dogs who eat too much (
+  'ownersEatTooMuch') and an array with all owners of 
+  dogs who eat too little ('ownersEatTooLittle').
+ */
+
+const eatTooMuch = dogs
+  .filter(dog => dog.curFood > dog.recFood)
+  .map(dog => dog.owners);
+
+console.log(eatTooMuch);
+
+/* Log a stringtotheconsoleforeacharraycreatedin3.,likethis:
+"Matildaand Alice and Bob's dogs eat too much!" and 
+"Sarah and John and Michael's dogs eat too little!" */
